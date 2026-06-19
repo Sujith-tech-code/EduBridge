@@ -3,12 +3,18 @@ import axios from 'axios'
 import '../styles/VolunteerHub.css'
 
 function VolunteerHub() {
-  const [volunteers, setVolunteers] = useState([])
-  const [donations, setDonations]   = useState([])
-  const [tutorForm, setTutorForm]   = useState({ name: '', phone: '', email: '', subject: '', availability: '', mode: 'both' })
-  const [donateForm, setDonateForm] = useState({ donorName: '', phone: '', bookTitle: '', quantity: 1, condition: 'good', preferredSchool: '' })
-  const [tutorMsg, setTutorMsg]     = useState('')
-  const [donateMsg, setDonateMsg]   = useState('')
+  const [volunteers, setVolunteers]     = useState([])
+  const [donations, setDonations]       = useState([])
+  const [tutorForm, setTutorForm]       = useState({ name: '', phone: '', email: '', subject: '', availability: '', mode: 'both' })
+  const [donateForm, setDonateForm]     = useState({ donorName: '', phone: '', bookTitle: '', quantity: 1, condition: 'good', preferredSchool: '' })
+  const [tutorMsg, setTutorMsg]         = useState('')
+  const [donateMsg, setDonateMsg]       = useState('')
+  const [newTrackingId, setNewTrackingId] = useState('')
+  const [trackInput, setTrackInput]     = useState('')
+  const [trackResult, setTrackResult]   = useState(null)
+  const [trackError, setTrackError]     = useState('')
+  const [trackLoading, setTrackLoading] = useState(false)
+  const [copied, setCopied]             = useState(false)
 
   useEffect(() => {
     axios.get('http://localhost:5000/api/volunteers').then(res => setVolunteers(res.data))
@@ -32,10 +38,32 @@ function VolunteerHub() {
     try {
       const res = await axios.post('http://localhost:5000/api/donations', donateForm)
       setDonations(prev => [res.data, ...prev])
-      setDonateMsg('✅ Thank you for your donation! We will get in touch.')
+      setNewTrackingId(res.data.trackingId)
+      setDonateMsg('')
       setDonateForm({ donorName: '', phone: '', bookTitle: '', quantity: 1, condition: 'good', preferredSchool: '' })
-    } catch {
-      setDonateMsg('❌ Something went wrong. Please try again.')
+    } catch (err) {
+      setDonateMsg(err.response?.data?.message || '❌ Something went wrong. Please try again.')
+    }
+  }
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(newTrackingId)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleTrack = async (e) => {
+    e.preventDefault()
+    setTrackLoading(true)
+    setTrackError('')
+    setTrackResult(null)
+    try {
+      const res = await axios.get(`http://localhost:5000/api/donations/track/${trackInput.trim()}`)
+      setTrackResult(res.data)
+    } catch (err) {
+      setTrackError(err.response?.data?.message || '❌ Tracking ID not found.')
+    } finally {
+      setTrackLoading(false)
     }
   }
 
@@ -82,20 +110,42 @@ function VolunteerHub() {
         {/* Book Donation */}
         <section className="hub-section">
           <h2>📖 Donate Books</h2>
-          <form className="hub-form" onSubmit={handleDonateSubmit}>
-            <input placeholder="Your Name *" value={donateForm.donorName} onChange={e => setDonateForm({...donateForm, donorName: e.target.value})} required />
-            <input placeholder="Phone Number *" value={donateForm.phone} onChange={e => setDonateForm({...donateForm, phone: e.target.value})} required />
-            <input placeholder="Book Title" value={donateForm.bookTitle} onChange={e => setDonateForm({...donateForm, bookTitle: e.target.value})} />
-            <input type="number" placeholder="Quantity" min="1" value={donateForm.quantity} onChange={e => setDonateForm({...donateForm, quantity: e.target.value})} />
-            <select value={donateForm.condition} onChange={e => setDonateForm({...donateForm, condition: e.target.value})}>
-              <option value="new">New</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-            </select>
-            <input placeholder="Preferred School (optional)" value={donateForm.preferredSchool} onChange={e => setDonateForm({...donateForm, preferredSchool: e.target.value})} />
-            <button type="submit">Submit Donation</button>
-            {donateMsg && <p className="form-msg">{donateMsg}</p>}
-          </form>
+
+          {/* Tracking ID shown after successful donation */}
+          {newTrackingId && (
+            <div className="tracking-success">
+              <p>🎉 Donation request submitted!</p>
+              <p>Your Tracking ID:</p>
+              <div className="tracking-id-box">
+                <span>{newTrackingId}</span>
+                <button onClick={handleCopy}>{copied ? '✅ Copied!' : 'Copy'}</button>
+              </div>
+              <p className="tracking-note">Save this ID to track your donation status anytime.</p>
+            </div>
+          )}
+
+          {!newTrackingId && (
+            <form className="hub-form" onSubmit={handleDonateSubmit}>
+              <input placeholder="Your Name *" value={donateForm.donorName} onChange={e => setDonateForm({...donateForm, donorName: e.target.value})} required />
+              <input placeholder="Phone Number *" value={donateForm.phone} onChange={e => setDonateForm({...donateForm, phone: e.target.value})} required />
+              <input placeholder="Book Title *" value={donateForm.bookTitle} onChange={e => setDonateForm({...donateForm, bookTitle: e.target.value})} required />
+              <input type="number" placeholder="Quantity" min="1" value={donateForm.quantity} onChange={e => setDonateForm({...donateForm, quantity: e.target.value})} required />
+              <select value={donateForm.condition} onChange={e => setDonateForm({...donateForm, condition: e.target.value})}>
+                <option value="new">New</option>
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+              </select>
+              <input placeholder="Preferred School (optional)" value={donateForm.preferredSchool} onChange={e => setDonateForm({...donateForm, preferredSchool: e.target.value})} />
+              <button type="submit">Submit Donation</button>
+              {donateMsg && <p className="form-msg">{donateMsg}</p>}
+            </form>
+          )}
+
+          {newTrackingId && (
+            <button className="donate-again-btn" onClick={() => setNewTrackingId('')}>
+              + Donate Another Book
+            </button>
+          )}
 
           <div className="donations-list">
             <h3>Recent Donations ({donations.length})</h3>
@@ -103,14 +153,51 @@ function VolunteerHub() {
             {donations.map(d => (
               <div className="volunteer-card" key={d._id}>
                 <strong>{d.donorName}</strong>
-                <span>{d.bookTitle || 'Books'} × {d.quantity}</span>
-                <span className="tag">{d.condition}</span>
+                <span>{d.bookTitle} × {d.quantity}</span>
+                <span className={`status-tag ${d.status}`}>
+                  {d.status === 'pending' ? '⏳ Pending' : '✅ Received'}
+                </span>
               </div>
             ))}
           </div>
         </section>
 
       </div>
+
+      {/* Track Donation Section */}
+      <section className="track-section">
+        <h2>🔍 Track My Donation</h2>
+        <p>Enter your Tracking ID to check the status of your book donation.</p>
+        <form className="track-form" onSubmit={handleTrack}>
+          <input
+            placeholder="Enter Tracking ID (e.g. EDU-482910)"
+            value={trackInput}
+            onChange={e => setTrackInput(e.target.value)}
+            required
+          />
+          <button type="submit">{trackLoading ? 'Tracking...' : 'Track'}</button>
+        </form>
+
+        {trackError && <p className="track-error">{trackError}</p>}
+
+        {trackResult && (
+          <div className="track-result">
+            <h3>Donation Status</h3>
+            <div className="track-info">
+              <p><strong>Tracking ID:</strong> {trackResult.trackingId}</p>
+              <p><strong>Donor:</strong> {trackResult.donorName}</p>
+              <p><strong>Book:</strong> {trackResult.bookTitle} × {trackResult.quantity}</p>
+              <p><strong>Submitted:</strong> {new Date(trackResult.createdAt).toLocaleDateString()}</p>
+              <div className={`track-status ${trackResult.status}`}>
+                {trackResult.status === 'pending'
+                  ? '⏳ Pending — Our team will collect your books soon.'
+                  : '✅ Received — Thank you! Your books have been collected.'}
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
     </div>
   )
 }

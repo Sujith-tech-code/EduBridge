@@ -10,6 +10,7 @@ function Navbar() {
     { path: '/resources', label: 'Resources' },
     { path: '/volunteer', label: 'Volunteer Hub' },
     { path: '/contact',   label: 'Contact' },
+    { path: '/admin',     label: 'Admin' },
   ]
 
   return (

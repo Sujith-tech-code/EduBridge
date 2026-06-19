@@ -6,6 +6,7 @@ import SchoolProfile from './pages/SchoolProfile'
 import LearningResources from './pages/LearningResources'
 import VolunteerHub from './pages/VolunteerHub'
 import Contact from './pages/Contact'
+import Admin from './pages/Admin'
 
 function App() {
   return (
@@ -13,11 +14,12 @@ function App() {
       <Navbar />
       <main>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/schools" element={<SchoolProfile />} />
+          <Route path="/"          element={<Home />} />
+          <Route path="/schools"   element={<SchoolProfile />} />
           <Route path="/resources" element={<LearningResources />} />
           <Route path="/volunteer" element={<VolunteerHub />} />
-          <Route path="/contact" element={<Contact />} />
+          <Route path="/contact"   element={<Contact />} />
+          <Route path="/admin"     element={<Admin />} />
         </Routes>
       </main>
       <Footer />

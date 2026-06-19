@@ -15,6 +15,7 @@ app.use('/api/schools',    require('./routes/schools'));
 app.use('/api/volunteers', require('./routes/volunteers'));
 app.use('/api/donations',  require('./routes/donations'));
 app.use('/api/feedback',   require('./routes/feedback'));
+app.use('/api/admin',      require('./routes/admin'));
 
 app.get('/', (req, res) => res.send('EduBridge API running...'));
 

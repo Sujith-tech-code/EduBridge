@@ -121,3 +121,179 @@
   text-align: center;
   padding: 1rem;
 }
+/* Tracking Success Box */
+.tracking-success {
+  background: #D1FAE5;
+  border: 1px solid #6EE7B7;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.tracking-success p {
+  color: #065F46;
+  font-weight: 500;
+  margin-bottom: 0.4rem;
+}
+
+.tracking-id-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  background: var(--white);
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  margin: 0.5rem 0;
+}
+
+.tracking-id-box span {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: 0.05em;
+}
+
+.tracking-id-box button {
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tracking-id-box button:hover { background: var(--blue); }
+
+.tracking-note {
+  font-size: 0.8rem !important;
+  color: #6EE7B7 !important;
+}
+
+.donate-again-btn {
+  width: 100%;
+  background: transparent;
+  border: 2px dashed var(--blue);
+  color: var(--blue);
+  padding: 0.7rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  transition: all 0.2s;
+}
+
+.donate-again-btn:hover {
+  background: var(--blue);
+  color: var(--white);
+}
+
+.status-tag {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.status-tag.pending  { background: #FEF3C7; color: #92400E; }
+.status-tag.received { background: #D1FAE5; color: #065F46; }
+
+/* Track Section */
+.track-section {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.track-section h2 {
+  font-size: 1.4rem;
+  color: var(--navy);
+  margin-bottom: 0.5rem;
+}
+
+.track-section p {
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+.track-form {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.track-form input {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  width: 300px;
+  font-family: 'Inter', sans-serif;
+}
+
+.track-form input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.track-form button {
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.track-form button:hover { background: var(--blue); }
+
+.track-error {
+  color: #e53e3e;
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+.track-result {
+  margin-top: 1.5rem;
+  background: var(--light);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: left;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.track-result h3 {
+  color: var(--navy);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.track-info p {
+  color: var(--text);
+  padding: 0.3rem 0;
+  font-size: 0.95rem;
+}
+
+.track-status {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.track-status.pending  { background: #FEF3C7; color: #92400E; }
+.track-status.received { background: #D1FAE5; color: #065F46; }
