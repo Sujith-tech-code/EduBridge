@@ -1,0 +1,32 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --navy:   #0D1B2A;
+  --blue:   #4A9ECA;
+  --amber:  #F5A623;
+  --green:  #3CB371;
+  --white:  #FFFFFF;
+  --light:  #F4F7FB;
+  --text:   #2C3E50;
+  --muted:  #6B7280;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--light);
+  color: var(--text);
+}
+
+h1, h2, h3 {
+  font-family: 'Nunito', sans-serif;
+}
+
+main {
+  min-height: 80vh;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@400;500;600&display=swap');
