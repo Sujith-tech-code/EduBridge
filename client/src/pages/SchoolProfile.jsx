@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import '../styles/SchoolProfile.css'
 
+const API = import.meta.env.VITE_API_URL
+
 function SchoolProfile() {
   const [schools, setSchools]       = useState([])
   const [selected, setSelected]     = useState(null)
   const [loading, setLoading]       = useState(true)
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/schools')
+    axios.get(`${API}/schools`)
       .then(res => { setSchools(res.data); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])

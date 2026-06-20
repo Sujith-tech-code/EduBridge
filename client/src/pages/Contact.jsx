@@ -2,6 +2,8 @@ import { useState } from 'react'
 import axios from 'axios'
 import '../styles/Contact.css'
 
+const API = import.meta.env.VITE_API_URL
+
 function Contact() {
   const [form, setForm]   = useState({ name: '', email: '', message: '', rating: 5 })
   const [msg, setMsg]     = useState('')
@@ -9,7 +11,7 @@ function Contact() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await axios.post('http://localhost:5000/api/feedback', form)
+      await axios.post(`${API}/feedback`, form)
       setMsg('✅ Feedback submitted! Thank you.')
       setForm({ name: '', email: '', message: '', rating: 5 })
     } catch {

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import '../styles/VolunteerHub.css'
 
+const API = import.meta.env.VITE_API_URL
+
 function VolunteerHub() {
   const [volunteers, setVolunteers]     = useState([])
   const [donations, setDonations]       = useState([])
@@ -17,14 +19,14 @@ function VolunteerHub() {
   const [copied, setCopied]             = useState(false)
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/volunteers').then(res => setVolunteers(res.data))
-    axios.get('http://localhost:5000/api/donations').then(res => setDonations(res.data))
+    axios.get(`${API}/volunteers`).then(res => setVolunteers(res.data))
+    axios.get(`${API}/donations`).then(res => setDonations(res.data))
   }, [])
 
   const handleTutorSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('http://localhost:5000/api/volunteers', tutorForm)
+      const res = await axios.post(`${API}/volunteers`, tutorForm)
       setVolunteers(prev => [res.data, ...prev])
       setTutorMsg('✅ Registered! We will contact you via WhatsApp/Call.')
       setTutorForm({ name: '', phone: '', email: '', subject: '', availability: '', mode: 'both' })
@@ -36,7 +38,7 @@ function VolunteerHub() {
   const handleDonateSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('http://localhost:5000/api/donations', donateForm)
+      const res = await axios.post(`${API}/donations`, donateForm)
       setDonations(prev => [res.data, ...prev])
       setNewTrackingId(res.data.trackingId)
       setDonateMsg('')
@@ -58,7 +60,7 @@ function VolunteerHub() {
     setTrackError('')
     setTrackResult(null)
     try {
-      const res = await axios.get(`http://localhost:5000/api/donations/track/${trackInput.trim()}`)
+      const res = await axios.get(`${API}/donations/track/${trackInput.trim()}`)
       setTrackResult(res.data)
     } catch (err) {
       setTrackError(err.response?.data?.message || '❌ Tracking ID not found.')
@@ -111,7 +113,6 @@ function VolunteerHub() {
         <section className="hub-section">
           <h2>📖 Donate Books</h2>
 
-          {/* Tracking ID shown after successful donation */}
           {newTrackingId && (
             <div className="tracking-success">
               <p>🎉 Donation request submitted!</p>
@@ -164,7 +165,6 @@ function VolunteerHub() {
 
       </div>
 
-      {/* Track Donation Section */}
       <section className="track-section">
         <h2>🔍 Track My Donation</h2>
         <p>Enter your Tracking ID to check the status of your book donation.</p>

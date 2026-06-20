@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import '../styles/Admin.css'
 
+const API = import.meta.env.VITE_API_URL
+
 function Admin() {
   const [password, setPassword]     = useState('')
   const [isAuth, setIsAuth]         = useState(false)
@@ -17,7 +19,7 @@ function Admin() {
     setLoading(true)
     setError('')
     try {
-      await axios.post('http://localhost:5000/api/admin/login', { password })
+      await axios.post(`${API}/admin/login`, { password })
       setIsAuth(true)
     } catch (err) {
       setError(err.response?.data?.message || '❌ Incorrect password. Try again.')
@@ -28,15 +30,15 @@ function Admin() {
 
   useEffect(() => {
     if (isAuth) {
-      axios.get('http://localhost:5000/api/donations').then(res => setDonations(res.data))
-      axios.get('http://localhost:5000/api/volunteers').then(res => setVolunteers(res.data))
-      axios.get('http://localhost:5000/api/feedback').then(res => setFeedbacks(res.data))
+      axios.get(`${API}/donations`).then(res => setDonations(res.data))
+      axios.get(`${API}/volunteers`).then(res => setVolunteers(res.data))
+      axios.get(`${API}/feedback`).then(res => setFeedbacks(res.data))
     }
   }, [isAuth])
 
   const markAsReceived = async (id) => {
     try {
-      const res = await axios.put(`http://localhost:5000/api/donations/${id}/status`, { status: 'received' })
+      const res = await axios.put(`${API}/donations/${id}/status`, { status: 'received' })
       setDonations(prev => prev.map(d => d._id === id ? res.data : d))
     } catch {
       alert('Failed to update status.')
@@ -45,7 +47,7 @@ function Admin() {
 
   const markAsPending = async (id) => {
     try {
-      const res = await axios.put(`http://localhost:5000/api/donations/${id}/status`, { status: 'pending' })
+      const res = await axios.put(`${API}/donations/${id}/status`, { status: 'pending' })
       setDonations(prev => prev.map(d => d._id === id ? res.data : d))
     } catch {
       alert('Failed to update status.')
@@ -84,7 +86,6 @@ function Admin() {
         <button className="logout-btn" onClick={() => setIsAuth(false)}>Logout</button>
       </div>
 
-      {/* Tabs */}
       <div className="admin-tabs">
         <button className={activeTab === 'donations'  ? 'tab active' : 'tab'} onClick={() => setActiveTab('donations')}>
           📦 Donations ({donations.length})
@@ -97,7 +98,6 @@ function Admin() {
         </button>
       </div>
 
-      {/* Donations Tab */}
       {activeTab === 'donations' && (
         <div className="admin-section">
           {donations.length === 0 && <p className="empty">No donations yet.</p>}
@@ -129,7 +129,6 @@ function Admin() {
         </div>
       )}
 
-      {/* Volunteers Tab */}
       {activeTab === 'volunteers' && (
         <div className="admin-section">
           {volunteers.length === 0 && <p className="empty">No volunteers yet.</p>}
@@ -148,7 +147,6 @@ function Admin() {
         </div>
       )}
 
-      {/* Feedback Tab */}
       {activeTab === 'feedback' && (
         <div className="admin-section">
           {feedbacks.length === 0 && <p className="empty">No feedback yet.</p>}
