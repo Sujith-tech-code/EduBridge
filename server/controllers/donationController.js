@@ -63,4 +63,24 @@ const trackDonation = async (req, res) => {
   }
 };
 
-module.exports = { getAllDonations, createDonation, updateDonationStatus, trackDonation };
+const deleteDonation = async (req, res) => {
+  try {
+    const donation = await Donation.findByIdAndDelete(req.params.id);
+    if (!donation) return res.status(404).json({ message: 'Donation not found' });
+    res.json({ message: 'Donation deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const deleteDonationByTrackingId = async (req, res) => {
+  try {
+    const donation = await Donation.findOneAndDelete({ trackingId: req.params.trackingId });
+    if (!donation) return res.status(404).json({ message: 'No donation found with this tracking ID.' });
+    res.json({ message: 'Donation deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { getAllDonations, createDonation, updateDonationStatus, trackDonation, deleteDonation, deleteDonationByTrackingId };

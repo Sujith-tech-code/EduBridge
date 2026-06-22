@@ -4,6 +4,20 @@ import '../styles/Admin.css'
 
 const API = import.meta.env.VITE_API_URL
 
+function ConfirmModal({ message, onConfirm, onCancel }) {
+  return (
+    <div className="modal-overlay">
+      <div className="confirm-modal">
+        <p>{message}</p>
+        <div className="confirm-actions">
+          <button className="btn-confirm-delete" onClick={onConfirm}>Yes, Delete</button>
+          <button className="btn-confirm-cancel" onClick={onCancel}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Admin() {
   const [password, setPassword]     = useState('')
   const [isAuth, setIsAuth]         = useState(false)
@@ -13,6 +27,7 @@ function Admin() {
   const [donations, setDonations]   = useState([])
   const [volunteers, setVolunteers] = useState([])
   const [feedbacks, setFeedbacks]   = useState([])
+  const [confirmAction, setConfirmAction] = useState(null)
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -40,27 +55,46 @@ function Admin() {
     try {
       const res = await axios.put(`${API}/donations/${id}/status`, { status: 'received' })
       setDonations(prev => prev.map(d => d._id === id ? res.data : d))
-    } catch {
-      alert('Failed to update status.')
-    }
+    } catch { alert('Failed to update status.') }
   }
 
   const markAsPending = async (id) => {
     try {
       const res = await axios.put(`${API}/donations/${id}/status`, { status: 'pending' })
       setDonations(prev => prev.map(d => d._id === id ? res.data : d))
-    } catch {
-      alert('Failed to update status.')
-    }
+    } catch { alert('Failed to update status.') }
   }
 
   const updateVolunteerStatus = async (id, status) => {
     try {
       const res = await axios.put(`${API}/volunteers/${id}/status`, { status })
       setVolunteers(prev => prev.map(v => v._id === id ? res.data : v))
-    } catch {
-      alert('Failed to update status.')
+    } catch { alert('Failed to update status.') }
+  }
+
+  const confirmDelete = (message, action) => {
+    setConfirmAction({ message, action })
+  }
+
+  const handleConfirm = async () => {
+    if (confirmAction) {
+      await confirmAction.action()
+      setConfirmAction(null)
     }
+  }
+
+  const deleteDonation = async (id) => {
+    try {
+      await axios.delete(`${API}/donations/${id}`)
+      setDonations(prev => prev.filter(d => d._id !== id))
+    } catch { alert('Failed to delete donation.') }
+  }
+
+  const deleteVolunteer = async (id) => {
+    try {
+      await axios.delete(`${API}/volunteers/${id}`)
+      setVolunteers(prev => prev.filter(v => v._id !== id))
+    } catch { alert('Failed to delete volunteer.') }
   }
 
   if (!isAuth) {
@@ -89,6 +123,15 @@ function Admin() {
 
   return (
     <div className="admin-page">
+
+      {confirmAction && (
+        <ConfirmModal
+          message={confirmAction.message}
+          onConfirm={handleConfirm}
+          onCancel={() => setConfirmAction(null)}
+        />
+      )}
+
       <div className="admin-header">
         <h1>🛠️ Admin Panel</h1>
         <p>Manage donations, volunteers, and feedback.</p>
@@ -125,14 +168,14 @@ function Admin() {
                   {d.status === 'pending' ? '⏳ Pending' : '✅ Received'}
                 </span>
                 {d.status === 'pending' ? (
-                  <button className="btn-receive" onClick={() => markAsReceived(d._id)}>
-                    Mark as Received
-                  </button>
+                  <button className="btn-receive" onClick={() => markAsReceived(d._id)}>Mark as Received</button>
                 ) : (
-                  <button className="btn-pending" onClick={() => markAsPending(d._id)}>
-                    Mark as Pending
-                  </button>
+                  <button className="btn-pending" onClick={() => markAsPending(d._id)}>Mark as Pending</button>
                 )}
+                <button className="btn-delete" onClick={() => confirmDelete(
+                  `Delete donation from ${d.donorName} (${d.bookTitle})?`,
+                  () => deleteDonation(d._id)
+                )}>🗑️ Delete</button>
               </div>
             </div>
           ))}
@@ -155,23 +198,21 @@ function Admin() {
               </div>
               <div className="admin-card-actions">
                 <span className={`status-badge ${v.status}`}>
-                  {v.status === 'pending' ? '⏳ Pending' : v.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+                  {!v.status || v.status === 'pending' ? '⏳ Pending' : v.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
                 </span>
-                {v.status === 'pending' && (
+                {(!v.status || v.status === 'pending') && (
                   <>
-                    <button className="btn-receive" onClick={() => updateVolunteerStatus(v._id, 'approved')}>
-                      Approve
-                    </button>
-                    <button className="btn-reject" onClick={() => updateVolunteerStatus(v._id, 'rejected')}>
-                      Reject
-                    </button>
+                    <button className="btn-receive" onClick={() => updateVolunteerStatus(v._id, 'approved')}>Approve</button>
+                    <button className="btn-reject" onClick={() => updateVolunteerStatus(v._id, 'rejected')}>Reject</button>
                   </>
                 )}
-                {v.status !== 'pending' && (
-                  <button className="btn-pending" onClick={() => updateVolunteerStatus(v._id, 'pending')}>
-                    Reset to Pending
-                  </button>
+                {v.status && v.status !== 'pending' && (
+                  <button className="btn-pending" onClick={() => updateVolunteerStatus(v._id, 'pending')}>Reset to Pending</button>
                 )}
+                <button className="btn-delete" onClick={() => confirmDelete(
+                  `Delete tutor registration for ${v.name}?`,
+                  () => deleteVolunteer(v._id)
+                )}>🗑️ Delete</button>
               </div>
             </div>
           ))}

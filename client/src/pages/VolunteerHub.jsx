@@ -12,19 +12,30 @@ function VolunteerHub() {
   const [donateForm, setDonateForm] = useState({ donorName: '', phone: '', bookTitle: '', quantity: 1, condition: 'good', preferredSchool: '' })
   const [tutorMsg, setTutorMsg]     = useState('')
   const [donateMsg, setDonateMsg]   = useState('')
+  const [newTutorTrackingId, setNewTutorTrackingId]   = useState('')
+  const [newDonationTrackingId, setNewDonationTrackingId] = useState('')
+  const [tutorCopied, setTutorCopied]     = useState(false)
+  const [donationCopied, setDonationCopied] = useState(false)
 
-  const [showAllTutors, setShowAllTutors]     = useState(false)
-  const [showAllDonations, setShowAllDonations] = useState(false)
-  const [tutorSearch, setTutorSearch]         = useState('')
-  const [donationSearch, setDonationSearch]   = useState('')
+  const [showAllTutors, setShowAllTutors]         = useState(false)
+  const [showAllDonations, setShowAllDonations]   = useState(false)
+  const [tutorSearch, setTutorSearch]             = useState('')
+  const [donationSearch, setDonationSearch]       = useState('')
 
-  const [modalItem, setModalItem]   = useState(null) // { type: 'tutor'|'donation', data }
+  const [modalItem, setModalItem] = useState(null)
 
   const [trackInput, setTrackInput]     = useState('')
   const [trackResult, setTrackResult]   = useState(null)
   const [trackError, setTrackError]     = useState('')
   const [trackLoading, setTrackLoading] = useState(false)
-  const [trackType, setTrackType]       = useState('donation') // 'donation' or 'tutor'
+  const [trackType, setTrackType]       = useState('donation')
+
+  const [deleteInput, setDeleteInput]   = useState('')
+  const [deleteType, setDeleteType]     = useState('donation')
+  const [deleteMsg, setDeleteMsg]       = useState('')
+  const [deleteError, setDeleteError]   = useState('')
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   useEffect(() => {
     axios.get(`${API}/volunteers`).then(res => setVolunteers(res.data))
@@ -36,7 +47,8 @@ function VolunteerHub() {
     try {
       const res = await axios.post(`${API}/volunteers`, tutorForm)
       setVolunteers(prev => [res.data, ...prev])
-      setTutorMsg('✅ Registered successfully! We will contact you via WhatsApp/Call.')
+      setNewTutorTrackingId(res.data.trackingId)
+      setTutorMsg('')
       setTutorForm({ name: '', phone: '', email: '', subject: '', availability: '', mode: 'both' })
     } catch {
       setTutorMsg('❌ Something went wrong. Please try again.')
@@ -48,11 +60,24 @@ function VolunteerHub() {
     try {
       const res = await axios.post(`${API}/donations`, donateForm)
       setDonations(prev => [res.data, ...prev])
-      setDonateMsg('✅ Donation request submitted! We will get in touch.')
+      setNewDonationTrackingId(res.data.trackingId)
+      setDonateMsg('')
       setDonateForm({ donorName: '', phone: '', bookTitle: '', quantity: 1, condition: 'good', preferredSchool: '' })
     } catch (err) {
       setDonateMsg(err.response?.data?.message || '❌ Something went wrong. Please try again.')
     }
+  }
+
+  const handleTutorCopy = () => {
+    navigator.clipboard.writeText(newTutorTrackingId)
+    setTutorCopied(true)
+    setTimeout(() => setTutorCopied(false), 2000)
+  }
+
+  const handleDonationCopy = () => {
+    navigator.clipboard.writeText(newDonationTrackingId)
+    setDonationCopied(true)
+    setTimeout(() => setDonationCopied(false), 2000)
   }
 
   const handleTrack = async (e) => {
@@ -61,15 +86,10 @@ function VolunteerHub() {
     setTrackError('')
     setTrackResult(null)
     try {
-      const endpoint = trackType === 'donation'
-        ? `${API}/donations/track/${trackInput.trim()}`
-        : null
-
       if (trackType === 'donation') {
-        const res = await axios.get(endpoint)
+        const res = await axios.get(`${API}/donations/track/${trackInput.trim()}`)
         setTrackResult({ type: 'donation', ...res.data })
       } else {
-        // Tutor tracking — find locally from already fetched volunteers via trackingId match
         const found = volunteers.find(v => v.trackingId === trackInput.trim())
         if (!found) throw new Error('not found')
         setTrackResult({ type: 'tutor', ...found })
@@ -81,7 +101,28 @@ function VolunteerHub() {
     }
   }
 
-  // Filtering
+  const handleDelete = async () => {
+    setDeleteLoading(true)
+    setDeleteMsg('')
+    setDeleteError('')
+    try {
+      if (deleteType === 'donation') {
+        await axios.delete(`${API}/donations/track/${deleteInput.trim()}`)
+        setDonations(prev => prev.filter(d => d.trackingId !== deleteInput.trim()))
+      } else {
+        await axios.delete(`${API}/volunteers/track/${deleteInput.trim()}`)
+        setVolunteers(prev => prev.filter(v => v.trackingId !== deleteInput.trim()))
+      }
+      setDeleteMsg('✅ Your submission has been deleted successfully.')
+      setDeleteInput('')
+    } catch (err) {
+      setDeleteError(err.response?.data?.message || '❌ Tracking ID not found.')
+    } finally {
+      setDeleteLoading(false)
+      setConfirmDelete(false)
+    }
+  }
+
   const filteredTutors = volunteers.filter(v =>
     v.name.toLowerCase().includes(tutorSearch.toLowerCase()) ||
     v.subject.toLowerCase().includes(tutorSearch.toLowerCase()) ||
@@ -94,7 +135,7 @@ function VolunteerHub() {
     d.trackingId?.toLowerCase().includes(donationSearch.toLowerCase())
   )
 
-  const visibleTutors    = showAllTutors ? filteredTutors : volunteers.slice(0, 3)
+  const visibleTutors    = showAllTutors    ? filteredTutors    : volunteers.slice(0, 3)
   const visibleDonations = showAllDonations ? filteredDonations : donations.slice(0, 3)
 
   return (
@@ -109,20 +150,34 @@ function VolunteerHub() {
         {/* Tutor Registration */}
         <section className="hub-section">
           <h2>📚 Register as a Tutor</h2>
-          <form className="hub-form" onSubmit={handleTutorSubmit}>
-            <input placeholder="Full Name *" value={tutorForm.name} onChange={e => setTutorForm({...tutorForm, name: e.target.value})} required />
-            <input placeholder="Phone Number *" value={tutorForm.phone} onChange={e => setTutorForm({...tutorForm, phone: e.target.value})} required />
-            <input placeholder="Email (optional)" value={tutorForm.email} onChange={e => setTutorForm({...tutorForm, email: e.target.value})} />
-            <input placeholder="Subject you can teach *" value={tutorForm.subject} onChange={e => setTutorForm({...tutorForm, subject: e.target.value})} required />
-            <input placeholder="Availability (e.g. Weekends)" value={tutorForm.availability} onChange={e => setTutorForm({...tutorForm, availability: e.target.value})} />
-            <select value={tutorForm.mode} onChange={e => setTutorForm({...tutorForm, mode: e.target.value})}>
-              <option value="online">Online</option>
-              <option value="offline">Offline</option>
-              <option value="both">Both</option>
-            </select>
-            <button type="submit">Register as Tutor</button>
-            {tutorMsg && <p className="form-msg">{tutorMsg}</p>}
-          </form>
+
+          {newTutorTrackingId ? (
+            <div className="tracking-success">
+              <p>🎉 Registration submitted successfully!</p>
+              <p>Your Tutor Tracking ID:</p>
+              <div className="tracking-id-box">
+                <span>{newTutorTrackingId}</span>
+                <button onClick={handleTutorCopy}>{tutorCopied ? '✅ Copied!' : 'Copy'}</button>
+              </div>
+              <p className="tracking-note">Save this ID to track your registration status anytime.</p>
+              <button className="donate-again-btn" onClick={() => setNewTutorTrackingId('')}>+ Register Another</button>
+            </div>
+          ) : (
+            <form className="hub-form" onSubmit={handleTutorSubmit}>
+              <input placeholder="Full Name *" value={tutorForm.name} onChange={e => setTutorForm({...tutorForm, name: e.target.value})} required />
+              <input placeholder="Phone Number *" value={tutorForm.phone} onChange={e => setTutorForm({...tutorForm, phone: e.target.value})} required />
+              <input placeholder="Email (optional)" value={tutorForm.email} onChange={e => setTutorForm({...tutorForm, email: e.target.value})} />
+              <input placeholder="Subject you can teach *" value={tutorForm.subject} onChange={e => setTutorForm({...tutorForm, subject: e.target.value})} required />
+              <input placeholder="Availability (e.g. Weekends)" value={tutorForm.availability} onChange={e => setTutorForm({...tutorForm, availability: e.target.value})} />
+              <select value={tutorForm.mode} onChange={e => setTutorForm({...tutorForm, mode: e.target.value})}>
+                <option value="online">Online</option>
+                <option value="offline">Offline</option>
+                <option value="both">Both</option>
+              </select>
+              <button type="submit">Register as Tutor</button>
+              {tutorMsg && <p className="form-msg">{tutorMsg}</p>}
+            </form>
+          )}
 
           <div className="list-section">
             <div className="list-header">
@@ -140,15 +195,15 @@ function VolunteerHub() {
 
             {visibleTutors.length === 0 && <p className="empty">No tutors found.</p>}
 
-            <div className="card-list">
+            <div className={showAllTutors ? 'card-list scrollable' : 'card-list'}>
               {visibleTutors.map(v => (
                 <div className="entry-card" key={v._id} onClick={() => setModalItem({ type: 'tutor', data: v })}>
                   <div className="entry-main">
                     <strong>{v.name}</strong>
                     <span>{v.subject}</span>
                   </div>
-                  <span className={`status-tag ${v.status}`}>
-                   {!v.status || v.status === 'pending' ? '⏳ Pending' : v.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+                  <span className={`status-tag ${!v.status || v.status === 'pending' ? 'pending' : v.status}`}>
+                    {!v.status || v.status === 'pending' ? '⏳ Pending' : v.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
                   </span>
                 </div>
               ))}
@@ -171,20 +226,33 @@ function VolunteerHub() {
         <section className="hub-section">
           <h2>📖 Donate Books</h2>
 
-          <form className="hub-form" onSubmit={handleDonateSubmit}>
-            <input placeholder="Your Name *" value={donateForm.donorName} onChange={e => setDonateForm({...donateForm, donorName: e.target.value})} required />
-            <input placeholder="Phone Number *" value={donateForm.phone} onChange={e => setDonateForm({...donateForm, phone: e.target.value})} required />
-            <input placeholder="Book Title *" value={donateForm.bookTitle} onChange={e => setDonateForm({...donateForm, bookTitle: e.target.value})} required />
-            <input type="number" placeholder="Quantity" min="1" value={donateForm.quantity} onChange={e => setDonateForm({...donateForm, quantity: e.target.value})} required />
-            <select value={donateForm.condition} onChange={e => setDonateForm({...donateForm, condition: e.target.value})}>
-              <option value="new">New</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-            </select>
-            <input placeholder="Preferred School (optional)" value={donateForm.preferredSchool} onChange={e => setDonateForm({...donateForm, preferredSchool: e.target.value})} />
-            <button type="submit">Submit Donation</button>
-            {donateMsg && <p className="form-msg">{donateMsg}</p>}
-          </form>
+          {newDonationTrackingId ? (
+            <div className="tracking-success">
+              <p>🎉 Donation request submitted!</p>
+              <p>Your Donation Tracking ID:</p>
+              <div className="tracking-id-box">
+                <span>{newDonationTrackingId}</span>
+                <button onClick={handleDonationCopy}>{donationCopied ? '✅ Copied!' : 'Copy'}</button>
+              </div>
+              <p className="tracking-note">Save this ID to track your donation status anytime.</p>
+              <button className="donate-again-btn" onClick={() => setNewDonationTrackingId('')}>+ Donate Another Book</button>
+            </div>
+          ) : (
+            <form className="hub-form" onSubmit={handleDonateSubmit}>
+              <input placeholder="Your Name *" value={donateForm.donorName} onChange={e => setDonateForm({...donateForm, donorName: e.target.value})} required />
+              <input placeholder="Phone Number *" value={donateForm.phone} onChange={e => setDonateForm({...donateForm, phone: e.target.value})} required />
+              <input placeholder="Book Title *" value={donateForm.bookTitle} onChange={e => setDonateForm({...donateForm, bookTitle: e.target.value})} required />
+              <input type="number" placeholder="Quantity" min="1" value={donateForm.quantity} onChange={e => setDonateForm({...donateForm, quantity: e.target.value})} required />
+              <select value={donateForm.condition} onChange={e => setDonateForm({...donateForm, condition: e.target.value})}>
+                <option value="new">New</option>
+                <option value="good">Good</option>
+                <option value="fair">Fair</option>
+              </select>
+              <input placeholder="Preferred School (optional)" value={donateForm.preferredSchool} onChange={e => setDonateForm({...donateForm, preferredSchool: e.target.value})} />
+              <button type="submit">Submit Donation</button>
+              {donateMsg && <p className="form-msg">{donateMsg}</p>}
+            </form>
+          )}
 
           <div className="list-section">
             <div className="list-header">
@@ -202,7 +270,7 @@ function VolunteerHub() {
 
             {visibleDonations.length === 0 && <p className="empty">No donations found.</p>}
 
-            <div className="card-list">
+            <div className={showAllDonations ? 'card-list scrollable' : 'card-list'}>
               {visibleDonations.map(d => (
                 <div className="entry-card" key={d._id} onClick={() => setModalItem({ type: 'donation', data: d })}>
                   <div className="entry-main">
@@ -266,9 +334,7 @@ function VolunteerHub() {
               <p><strong>Book:</strong> {trackResult.bookTitle} × {trackResult.quantity}</p>
               <p><strong>Submitted:</strong> {new Date(trackResult.createdAt).toLocaleDateString()}</p>
               <div className={`track-status ${trackResult.status}`}>
-                {trackResult.status === 'pending'
-                  ? '⏳ Pending — Our team will collect your books soon.'
-                  : '✅ Received — Thank you! Your books have been collected.'}
+                {trackResult.status === 'pending' ? '⏳ Pending — Our team will collect your books soon.' : '✅ Received — Thank you! Your books have been collected.'}
               </div>
             </div>
           </div>
@@ -292,6 +358,50 @@ function VolunteerHub() {
         )}
       </section>
 
+      {/* Delete by Tracking ID Section */}
+      <section className="track-section delete-section">
+        <h2>🗑️ Delete My Submission</h2>
+        <p>Enter your Tracking ID to delete your tutor registration or book donation request.</p>
+
+        <div className="track-type-toggle">
+          <button className={deleteType === 'donation' ? 'toggle-btn active' : 'toggle-btn'} onClick={() => { setDeleteType('donation'); setDeleteMsg(''); setDeleteError('') }}>
+            📦 Donation
+          </button>
+          <button className={deleteType === 'tutor' ? 'toggle-btn active' : 'toggle-btn'} onClick={() => { setDeleteType('tutor'); setDeleteMsg(''); setDeleteError('') }}>
+            👨‍🏫 Tutor
+          </button>
+        </div>
+
+        {!confirmDelete ? (
+          <div className="track-form">
+            <input
+              placeholder={deleteType === 'donation' ? 'Enter Donation Tracking ID' : 'Enter Tutor Tracking ID'}
+              value={deleteInput}
+              onChange={e => setDeleteInput(e.target.value)}
+            />
+            <button
+              className="btn-delete-track"
+              onClick={() => { if (deleteInput.trim()) setConfirmDelete(true) }}
+            >
+              Delete
+            </button>
+          </div>
+        ) : (
+          <div className="confirm-inline">
+            <p>⚠️ Are you sure you want to delete submission with ID <strong>{deleteInput}</strong>? This cannot be undone.</p>
+            <div className="confirm-actions">
+              <button className="btn-confirm-delete" onClick={handleDelete} disabled={deleteLoading}>
+                {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+              <button className="btn-confirm-cancel" onClick={() => setConfirmDelete(false)}>Cancel</button>
+            </div>
+          </div>
+        )}
+
+        {deleteMsg && <p className="form-msg" style={{marginTop: '1rem'}}>{deleteMsg}</p>}
+        {deleteError && <p className="track-error">{deleteError}</p>}
+      </section>
+
       {/* Modal */}
       {modalItem && (
         <div className="modal-overlay" onClick={() => setModalItem(null)}>
@@ -301,7 +411,7 @@ function VolunteerHub() {
             {modalItem.type === 'tutor' && (
               <>
                 <h3>👨‍🏫 Tutor Details</h3>
-                <div className="modal-tracking-id">{modalItem.data.trackingId}</div>
+                <div className="modal-tracking-id">{modalItem.data.trackingId || 'No Tracking ID'}</div>
                 <div className="modal-details">
                   <p><strong>Name:</strong> {modalItem.data.name}</p>
                   <p><strong>Phone:</strong> {modalItem.data.phone}</p>
@@ -311,8 +421,8 @@ function VolunteerHub() {
                   <p><strong>Mode:</strong> {modalItem.data.mode}</p>
                   <p><strong>Registered:</strong> {new Date(modalItem.data.createdAt).toLocaleDateString()}</p>
                 </div>
-                <span className={`status-tag large ${modalItem.data.status}`}>
-                 {!modalItem.data.status || modalItem.data.status === 'pending' ? '⏳ Pending' : modalItem.data.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+                <span className={`status-tag large ${!modalItem.data.status || modalItem.data.status === 'pending' ? 'pending' : modalItem.data.status}`}>
+                  {!modalItem.data.status || modalItem.data.status === 'pending' ? '⏳ Pending' : modalItem.data.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
                 </span>
               </>
             )}

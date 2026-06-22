@@ -39,4 +39,24 @@ const updateVolunteerStatus = async (req, res) => {
   }
 };
 
-module.exports = { getAllVolunteers, createVolunteer, updateVolunteerStatus };
+const deleteVolunteer = async (req, res) => {
+  try {
+    const volunteer = await Volunteer.findByIdAndDelete(req.params.id);
+    if (!volunteer) return res.status(404).json({ message: 'Volunteer not found' });
+    res.json({ message: 'Volunteer deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const deleteVolunteerByTrackingId = async (req, res) => {
+  try {
+    const volunteer = await Volunteer.findOneAndDelete({ trackingId: req.params.trackingId });
+    if (!volunteer) return res.status(404).json({ message: 'No tutor registration found with this tracking ID.' });
+    res.json({ message: 'Tutor registration deleted successfully.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { getAllVolunteers, createVolunteer, updateVolunteerStatus, deleteVolunteer, deleteVolunteerByTrackingId };

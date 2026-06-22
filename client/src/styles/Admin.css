@@ -226,3 +226,66 @@
 }
 
 .btn-reject:hover { opacity: 0.85; }
+
+.btn-delete {
+  background: #e53e3e;
+  color: var(--white);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-delete:hover { opacity: 0.85; }
+
+.confirm-modal {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.confirm-modal p {
+  font-size: 1rem;
+  color: var(--navy);
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.btn-confirm-delete {
+  background: #e53e3e;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-confirm-delete:hover { opacity: 0.85; }
+
+.btn-confirm-cancel {
+  background: var(--light);
+  color: var(--navy);
+  border: 1.5px solid #e2e8f0;
+  padding: 0.6rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-confirm-cancel:hover { border-color: var(--blue); color: var(--blue); }
