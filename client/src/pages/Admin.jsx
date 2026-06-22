@@ -54,6 +54,15 @@ function Admin() {
     }
   }
 
+  const updateVolunteerStatus = async (id, status) => {
+    try {
+      const res = await axios.put(`${API}/volunteers/${id}/status`, { status })
+      setVolunteers(prev => prev.map(v => v._id === id ? res.data : v))
+    } catch {
+      alert('Failed to update status.')
+    }
+  }
+
   if (!isAuth) {
     return (
       <div className="admin-login">
@@ -108,6 +117,7 @@ function Admin() {
                 <span>📞 {d.phone}</span>
                 <span>📚 {d.bookTitle} × {d.quantity}</span>
                 <span>Condition: {d.condition}</span>
+                <span>🔖 {d.trackingId}</span>
                 {d.preferredSchool && <span>🏫 {d.preferredSchool}</span>}
               </div>
               <div className="admin-card-actions">
@@ -139,8 +149,29 @@ function Admin() {
                 <span>📞 {v.phone}</span>
                 {v.email && <span>📧 {v.email}</span>}
                 <span>📖 {v.subject}</span>
-                <span>🕒 {v.availability}</span>
+                {v.availability && <span>🕒 {v.availability}</span>}
                 <span className="tag">{v.mode}</span>
+                <span>🔖 {v.trackingId}</span>
+              </div>
+              <div className="admin-card-actions">
+                <span className={`status-badge ${v.status}`}>
+                  {v.status === 'pending' ? '⏳ Pending' : v.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+                </span>
+                {v.status === 'pending' && (
+                  <>
+                    <button className="btn-receive" onClick={() => updateVolunteerStatus(v._id, 'approved')}>
+                      Approve
+                    </button>
+                    <button className="btn-reject" onClick={() => updateVolunteerStatus(v._id, 'rejected')}>
+                      Reject
+                    </button>
+                  </>
+                )}
+                {v.status !== 'pending' && (
+                  <button className="btn-pending" onClick={() => updateVolunteerStatus(v._id, 'pending')}>
+                    Reset to Pending
+                  </button>
+                )}
               </div>
             </div>
           ))}

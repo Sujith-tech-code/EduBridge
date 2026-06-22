@@ -213,3 +213,16 @@
   border-radius: 20px;
   font-weight: 600;
 }
+.btn-reject {
+  background: #e53e3e;
+  color: var(--white);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btn-reject:hover { opacity: 0.85; }
