@@ -19,14 +19,15 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
 }
 
 function Admin() {
-  const [password, setPassword]     = useState('')
-  const [isAuth, setIsAuth]         = useState(false)
-  const [error, setError]           = useState('')
-  const [loading, setLoading]       = useState(false)
-  const [activeTab, setActiveTab]   = useState('donations')
-  const [donations, setDonations]   = useState([])
-  const [volunteers, setVolunteers] = useState([])
-  const [feedbacks, setFeedbacks]   = useState([])
+  const [password, setPassword]         = useState('')
+  const [isAuth, setIsAuth]             = useState(false)
+  const [error, setError]               = useState('')
+  const [loading, setLoading]           = useState(false)
+  const [activeTab, setActiveTab]       = useState('donations')
+  const [donations, setDonations]       = useState([])
+  const [volunteers, setVolunteers]     = useState([])
+  const [feedbacks, setFeedbacks]       = useState([])
+  const [schools, setSchools]           = useState([])
   const [confirmAction, setConfirmAction] = useState(null)
 
   const handleLogin = async (e) => {
@@ -48,6 +49,7 @@ function Admin() {
       axios.get(`${API}/donations`).then(res => setDonations(res.data))
       axios.get(`${API}/volunteers`).then(res => setVolunteers(res.data))
       axios.get(`${API}/feedback`).then(res => setFeedbacks(res.data))
+      axios.get(`${API}/schools/admin/all`).then(res => setSchools(res.data))
     }
   }, [isAuth])
 
@@ -72,9 +74,14 @@ function Admin() {
     } catch { alert('Failed to update status.') }
   }
 
-  const confirmDelete = (message, action) => {
-    setConfirmAction({ message, action })
+  const updateSchoolStatus = async (id, status) => {
+    try {
+      const res = await axios.put(`${API}/schools/${id}/status`, { status })
+      setSchools(prev => prev.map(s => s._id === id ? res.data : s))
+    } catch { alert('Failed to update school status.') }
   }
+
+  const confirmDelete = (message, action) => setConfirmAction({ message, action })
 
   const handleConfirm = async () => {
     if (confirmAction) {
@@ -95,6 +102,13 @@ function Admin() {
       await axios.delete(`${API}/volunteers/${id}`)
       setVolunteers(prev => prev.filter(v => v._id !== id))
     } catch { alert('Failed to delete volunteer.') }
+  }
+
+  const deleteSchool = async (id) => {
+    try {
+      await axios.delete(`${API}/schools/${id}`)
+      setSchools(prev => prev.filter(s => s._id !== id))
+    } catch { alert('Failed to delete school.') }
   }
 
   if (!isAuth) {
@@ -134,7 +148,7 @@ function Admin() {
 
       <div className="admin-header">
         <h1>🛠️ Admin Panel</h1>
-        <p>Manage donations, volunteers, and feedback.</p>
+        <p>Manage donations, volunteers, schools, and feedback.</p>
         <button className="logout-btn" onClick={() => setIsAuth(false)}>Logout</button>
       </div>
 
@@ -144,6 +158,9 @@ function Admin() {
         </button>
         <button className={activeTab === 'volunteers' ? 'tab active' : 'tab'} onClick={() => setActiveTab('volunteers')}>
           👨‍🏫 Volunteers ({volunteers.length})
+        </button>
+        <button className={activeTab === 'schools'    ? 'tab active' : 'tab'} onClick={() => setActiveTab('schools')}>
+          🏫 Schools ({schools.length})
         </button>
         <button className={activeTab === 'feedback'   ? 'tab active' : 'tab'} onClick={() => setActiveTab('feedback')}>
           💬 Feedback ({feedbacks.length})
@@ -197,7 +214,7 @@ function Admin() {
                 <span>🔖 {v.trackingId}</span>
               </div>
               <div className="admin-card-actions">
-                <span className={`status-badge ${v.status}`}>
+                <span className={`status-badge ${!v.status || v.status === 'pending' ? 'pending' : v.status}`}>
                   {!v.status || v.status === 'pending' ? '⏳ Pending' : v.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
                 </span>
                 {(!v.status || v.status === 'pending') && (
@@ -212,6 +229,42 @@ function Admin() {
                 <button className="btn-delete" onClick={() => confirmDelete(
                   `Delete tutor registration for ${v.name}?`,
                   () => deleteVolunteer(v._id)
+                )}>🗑️ Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeTab === 'schools' && (
+        <div className="admin-section">
+          {schools.length === 0 && <p className="empty">No school registrations yet.</p>}
+          {schools.map(s => (
+            <div className="admin-card" key={s._id}>
+              <div className="admin-card-info">
+                <strong>{s.name}</strong>
+                <span>📍 {s.location}</span>
+                {s.principalName && <span>👨‍💼 {s.principalName}</span>}
+                {s.contact && <span>📞 {s.contact}</span>}
+                {s.email && <span>📧 {s.email}</span>}
+                {s.overview && <span className="overview-snippet">📝 {s.overview.slice(0, 80)}...</span>}
+              </div>
+              <div className="admin-card-actions">
+                <span className={`status-badge ${s.status}`}>
+                  {s.status === 'pending' ? '⏳ Pending' : s.status === 'approved' ? '✅ Approved' : '❌ Rejected'}
+                </span>
+                {s.status === 'pending' && (
+                  <>
+                    <button className="btn-receive" onClick={() => updateSchoolStatus(s._id, 'approved')}>Approve</button>
+                    <button className="btn-reject" onClick={() => updateSchoolStatus(s._id, 'rejected')}>Reject</button>
+                  </>
+                )}
+                {s.status !== 'pending' && (
+                  <button className="btn-pending" onClick={() => updateSchoolStatus(s._id, 'pending')}>Reset to Pending</button>
+                )}
+                <button className="btn-delete" onClick={() => confirmDelete(
+                  `Delete school registration for ${s.name}?`,
+                  () => deleteSchool(s._id)
                 )}>🗑️ Delete</button>
               </div>
             </div>

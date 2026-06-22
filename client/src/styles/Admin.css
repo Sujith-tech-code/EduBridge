@@ -289,3 +289,8 @@
 }
 
 .btn-confirm-cancel:hover { border-color: var(--blue); color: var(--blue); }
+.overview-snippet {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}

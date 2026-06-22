@@ -7,7 +7,10 @@ const schoolSchema = new mongoose.Schema({
   principalMessage: { type: String },
   overview: { type: String },
   facilities: [String],
-  gallery: [String], // image URLs
+  gallery: [String],
+  contact: { type: String },
+  email: { type: String },
+  status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
 }, { timestamps: true });
 
 module.exports = mongoose.model('School', schoolSchema);
